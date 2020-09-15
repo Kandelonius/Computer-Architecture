@@ -7,14 +7,32 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        # Ram
-        self.RAM = [0] * 8
+        # Ram 256 bytes
+        self.RAM = [0] * 256
         # MAR Memory Address Register
         self.MAR = None
         # MDR Memory Data Register
         self.MDR = None
+        # reg 8 bit
+        self.reg = [0] * 8
 
+        self.pc = 0
 
+        self.running = False
+
+    # LDI: load "immediate", store a value in a register, or "set this register to this value".
+    def LDI(self, loc, value):
+        self.reg[loc] = value
+        pc += 3
+
+    # PRN: a pseudo-instruction that prints the numeric value stored in a register
+    def PRN(self, loc):
+        print(self.reg[loc])
+        pc += 2
+
+    # HLT: halt the CPU and exit the emulator
+    def HLT(self):
+        self.running = False
 
     def load(self):
         """
@@ -71,11 +89,19 @@ class CPU:
 
         print()
 
+    def ram_read(self, address):
+        return self.RAM[address]
+
+    def ram_write(self, address, value):
+        self.RAM[address] = value
+
+
     def run(self):
         """Run the CPU."""
-        pass
+        self.running = True
+        self.trace
+        while self.running:
+            ir = self.ram_read[self.pc]
 
-    def ram_read(self, address):
-        pass
-    def ram_write(self, address, value):
-        pass
+
+
