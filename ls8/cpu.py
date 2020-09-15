@@ -7,10 +7,21 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        # Ram
+        self.RAM = [0] * 8
+        # MAR Memory Address Register
+        self.MAR = None
+        # MDR Memory Data Register
+        self.MDR = None
+
+
 
     def load(self):
-        """Load a program into memory."""
+        """
+        Load a program into memory.
+        
+        """
+
 
         address = 0
 
@@ -62,4 +73,9 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
+        pass
+
+    def ram_read(self, address):
+        pass
+    def ram_write(self, address, value):
         pass
