@@ -1,5 +1,5 @@
 """CPU functionality."""
-
+import sys
 
 class CPU:
     """Main CPU class."""
@@ -19,6 +19,10 @@ class CPU:
 
         self.running = False
 
+
+    if len(sys.argv) != 2: # must use format ls8.py cpu to call
+        print("usage: ls8.py filename")
+        sys.exit()
     def load(self):
         """
         Load a program into memory.
@@ -55,14 +59,19 @@ class CPU:
 
     # HLT: halt the CPU and exit the emulator
     def HLT(self):
-        self.running = False
+        sys.exit()
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        # elif op == "SUB": etc
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
+        elif op == "DIV":
+            self.reg[reg_a] /= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -107,11 +116,11 @@ class CPU:
                 self.LDI(2, self.RAM[2])
                 self.pc += 3
 
-            if ir == PRN:
+            elif ir == PRN:
                 self.PRN(2)
                 self.pc += 2
 
-            if ir == HLT:
+            elif ir == HLT:
                 self.HLT()
                 # self.running = False
             else:
