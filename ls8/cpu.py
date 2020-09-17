@@ -18,48 +18,70 @@ class CPU:
         self.pc = 0
 
         self.running = False
+        self.codes = {
+            "LDI" : 0b10000010,
+            "PRN" : 0b01000111,
+            "HLT" : 0b00000001,
+            "MUL" : 0b10100010,
+        }
 
-
-    if len(sys.argv) != 2: # must use format ls8.py cpu to call
-        print("usage: ls8.py filename")
-        sys.exit()
     def load(self):
         """
         Load a program into memory.
-        
-        """
 
-        address = 0
+        """
+        if len(sys.argv) != 2: # must use format ls8.py cpu to call
+            print("usage: ls8.py filename")
+            sys.exit()
+        try:
+            address = 0
+            with open(sys.argv[1]) as program:
+                for instruction in program:
+                    if "#" in instruction:
+                        instruction = instruction.split()[0]
+                        if instruction == "#":
+                            continue
+                    else:
+                        instruction = instruction.replace("\n", "")
+                    self.RAM[address] = int(instruction, 2)
+                    address += 1
+        except FileNotFoundError:
+            print(f"Couldn't open {sys.argv[1]}")
+            sys.exit()
+
+        if address == 0:
+            print("Program was empty")
+            sys.exit()
 
         # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010,  # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111,  # PRN R0
-            0b00000000,
-            0b00000001,  # HLT
-        ]
-
-        for instruction in program:
-            self.RAM[address] = instruction
-            address += 1
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010,  # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111,  # PRN R0
+        #     0b00000000,
+        #     0b00000001,  # HLT
+        # ]
+        #
+        # for instruction in program:
+        #     self.RAM[address] = instruction
+        #     address += 1
 
     # LDI: load "immediate", store a value in a register, or "set this register to this value".
-    def LDI(self, loc, value):
-        self.reg[loc] = value
-        # self.pc += 3
-
-    # PRN: a pseudo-instruction that prints the numeric value stored in a register
-    def PRN(self, loc):
-        print(self.reg[loc])
-        # self.pc += 2
-
-    # HLT: halt the CPU and exit the emulator
-    def HLT(self):
-        sys.exit()
+    # def LDI(self, loc, value):
+    #     self.reg[loc] = value
+    #     # self.pc += 3
+    #
+    # # PRN: a pseudo-instruction that prints the numeric value stored in a register
+    # def PRN(self, loc):
+    #     print(self.reg[loc])
+    #     # self.pc += 2
+    #
+    # # HLT: halt the CPU and exit the emulator
+    # def HLT(self):
+    #     sys.exit()
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -68,7 +90,7 @@ class CPU:
             self.reg[reg_a] += self.reg[reg_b]
         elif op == "SUB":
             self.reg[reg_a] -= self.reg[reg_b]
-        elif op == "MUL":
+        elif op == "MUL": # ls8.py examples/mult.ls8
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "DIV":
             self.reg[reg_a] /= self.reg[reg_b]
@@ -103,25 +125,33 @@ class CPU:
 
     def run(self):
         # prebuilt functions
-        LDI = 0b10000010
-        PRN = 0b01000111
-        HLT = 0b00000001
+        # LDI = 0b10000010
+        # PRN = 0b01000111
+        # HLT = 0b00000001
         """Run the CPU."""
         self.running = True
         # self.trace(self)
         while self.running:
             ir = self.ram_read(self.pc)
 
-            if ir == LDI:
-                self.LDI(2, self.RAM[2])
+            if ir == self.codes["LDI"]:
+                reg_num = self.RAM[self.pc + 1]
+                value = self.RAM[self.pc + 2]
+                self.reg[reg_num] = value
                 self.pc += 3
 
-            elif ir == PRN:
-                self.PRN(2)
+            elif ir == self.codes["PRN"]:
+                reg_num = self.RAM[self.pc + 1]
+                print(self.reg[reg_num])
                 self.pc += 2
 
-            elif ir == HLT:
-                self.HLT()
+            elif ir == self.codes["HLT"]:
+                sys.exit()
                 # self.running = False
+            elif ir == self.codes["MUL"]:
+                reg_num1 = self.RAM[self.pc + 1]
+                reg_num2 = self.RAM[self.pc + 2]
+                self.alu("MUL", reg_num1, reg_num2)
+                self.pc += 3
             else:
                 print(f"Unknown instruction")
