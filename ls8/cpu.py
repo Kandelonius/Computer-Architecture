@@ -1,6 +1,7 @@
 """CPU functionality."""
 import sys
 
+
 class CPU:
     """Main CPU class."""
 
@@ -12,6 +13,8 @@ class CPU:
         self.MAR = None
         # MDR Memory Data Register
         self.MDR = None
+        # stack default pointer to 0xF4?
+        self.SP = 7
         # reg 8 bit
         self.reg = [0] * 8
 
@@ -19,10 +22,12 @@ class CPU:
 
         self.running = False
         self.codes = {
-            "LDI" : 0b10000010,
-            "PRN" : 0b01000111,
-            "HLT" : 0b00000001,
-            "MUL" : 0b10100010,
+            "LDI": 0b10000010,
+            "PRN": 0b01000111,
+            "HLT": 0b00000001,
+            "MUL": 0b10100010,
+            "POP": 0b01000110,
+            "PUSH": 0b01000101,
         }
 
     def load(self):
@@ -30,7 +35,7 @@ class CPU:
         Load a program into memory.
 
         """
-        if len(sys.argv) != 2: # must use format ls8.py cpu to call
+        if len(sys.argv) != 2:  # must use format ls8.py cpu to call
             print("usage: ls8.py filename")
             sys.exit()
         try:
@@ -90,7 +95,7 @@ class CPU:
             self.reg[reg_a] += self.reg[reg_b]
         elif op == "SUB":
             self.reg[reg_a] -= self.reg[reg_b]
-        elif op == "MUL": # ls8.py examples/mult.ls8
+        elif op == "MUL":  # ls8.py examples/mult.ls8
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "DIV":
             self.reg[reg_a] /= self.reg[reg_b]
@@ -153,5 +158,29 @@ class CPU:
                 reg_num2 = self.RAM[self.pc + 2]
                 self.alu("MUL", reg_num1, reg_num2)
                 self.pc += 3
+            elif ir == self.codes["PUSH"]:
+                # Decrement SP
+                self.reg[self.SP] -= 1
+                # Get the reg num to push
+                reg_num = self.RAM[self.pc + 1]
+                # Get the value to push
+                value = self.reg[reg_num]
+                # Copy the value to the SP address
+                top_of_stack_addr = self.reg[self.SP]
+                self.RAM[top_of_stack_addr] = value
+                self.pc += 2
+
+            elif ir == self.codes["POP"]:
+                # Get reg to pop into
+                reg_num = self.RAM[self.pc + 1]
+                # Get the top of stack addr
+                top_of_stack_addr = self.reg[self.SP]
+                # Get the value at the top of the stack
+                value = self.RAM[top_of_stack_addr]
+                # Store the value in the register
+                self.reg[reg_num] = value
+                # Increment the SP
+                self.reg[self.SP] += 1
+                self.pc += 2
             else:
                 print(f"Unknown instruction")
