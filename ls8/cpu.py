@@ -187,6 +187,7 @@ class CPU:
                 reg_num2 = self.RAM[self.pc + 2]
                 self.alu("MUL", reg_num1, reg_num2)
                 self.pc += 3
+
             elif ir == self.codes["PUSH"]:
                 # Decrement SP
                 self.reg[self.SP] -= 1
