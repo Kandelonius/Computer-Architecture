@@ -25,15 +25,17 @@ class CPU:
             "LDI": 0b10000010,
             "PRN": 0b01000111,
             "HLT": 0b00000001,
+            "ADD": 0b10100000,
             "MUL": 0b10100010,
             "POP": 0b01000110,
             "PUSH": 0b01000101,
+            "CALL": 0b01010000,
+            "RET": 0b00010001,
         }
 
     def load(self):
         """
         Load a program into memory.
-
         """
         if len(sys.argv) != 2:  # must use format ls8.py cpu to call
             print("usage: ls8.py filename")
@@ -55,7 +57,7 @@ class CPU:
             sys.exit()
 
         if address == 0:
-            print("Program was empty")
+            print("no program information")
             sys.exit()
 
         # For now, we've just hardcoded a program:
@@ -128,6 +130,26 @@ class CPU:
     def ram_write(self, address, value):
         self.RAM[address] = value
 
+    def push_value(self, value):
+        # Decrement SP
+        self.reg[self.SP] -= 1
+
+        # Copy the value to the SP address
+        top_of_stack_addr = self.reg[self.SP]
+        self.RAM[top_of_stack_addr] = value
+
+    def pop_value(self):
+        # Get the top of stack addr
+        top_of_stack_addr = self.reg[self.SP]
+
+        # Get the value at the top of the stack
+        value = self.RAM[top_of_stack_addr]
+
+        # Increment the SP
+        self.reg[self.SP] += 1
+
+        return value
+
     def run(self):
         # prebuilt functions
         # LDI = 0b10000010
@@ -153,6 +175,13 @@ class CPU:
             elif ir == self.codes["HLT"]:
                 sys.exit()
                 # self.running = False
+
+            elif ir == self.codes["ADD"]:
+                reg_num1 = self.RAM[self.pc + 1]
+                reg_num2 = self.RAM[self.pc + 2]
+                self.alu("ADD", reg_num1, reg_num2)
+                self.pc += 3
+
             elif ir == self.codes["MUL"]:
                 reg_num1 = self.RAM[self.pc + 1]
                 reg_num2 = self.RAM[self.pc + 2]
@@ -182,5 +211,27 @@ class CPU:
                 # Increment the SP
                 self.reg[self.SP] += 1
                 self.pc += 2
+
+            elif ir == self.codes["CALL"]:
+                # Compute the return addr
+                return_addr = self.pc + 2
+                # Push return addr on stack
+                self.push_value(return_addr)
+                # Get the value from the operand reg
+                reg_num = self.RAM[self.pc + 1]
+                value = self.reg[reg_num]
+                # Set the pc to that value
+                self.pc = value
+
+            elif ir == self.codes["RET"]:
+                # return from subroutine
+                # pop value from the top of the stack and store it in th pc
+                return_addr = self.RAM[self.reg[self.SP]]
+                self.reg[self.SP] += 1
+                # Set the PC to it
+                self.pc = return_addr
+
             else:
-                print(f"Unknown instruction")
+                print(f"Unknown instruction {ir}")
+                self.trace()
+                sys.exit()
